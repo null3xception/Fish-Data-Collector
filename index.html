@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b5d7a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="tailwind.css">
+<title>Fish Data Collector</title>
+<script defer src="app.js"></script>
+<script defer src="vendor/alpine.min.js"></script>
+</head>
+<body class="bg-mist text-ink h-full m-0 font-sans" x-data="fishApp" x-cloak>
+
+<div class="flex flex-col h-screen">
+  <!-- Header -->
+  <header class="bg-brand text-white flex items-center gap-3 px-4 min-h-[60px]">
+    <button class="btn btn-light md:hidden" x-show="editing" @click="editing = false">&larr; List</button>
+    <h1 class="text-xl font-bold flex-1 m-0">Fish Data Collector</h1>
+    <span class="text-sm opacity-85 hidden sm:inline" x-text="summary"></span>
+    <button class="btn btn-light" @click="startNew()">+ New fish</button>
+    <button class="btn !bg-brand-dark" :disabled="busy" @click="exportDataset()">Export dataset</button>
+  </header>
+
+  <div class="flex-1 min-h-0 grid md:grid-cols-[minmax(300px,36%)_1fr]">
+    <!-- List pane -->
+    <section class="overflow-auto p-3.5 md:border-r border-line" :class="editing ? 'hidden md:block' : ''">
+      <input type="search" class="field mb-3" placeholder="Search species or description…" x-model="search">
+      <template x-for="f in filtered" :key="f.uid">
+        <div class="flex gap-3 items-center bg-white rounded-xl p-2.5 mb-2.5 shadow-sm cursor-pointer border-2"
+             :class="cur && cur.uid === f.uid ? 'border-brand-light' : 'border-transparent'"
+             @click="open(f)">
+          <img class="w-[72px] h-[72px] object-cover rounded-lg bg-slate-300 shrink-0"
+               :src="f.photos[0] ? url(f.photos[0].blob) : ''" alt="">
+          <div>
+            <div class="font-semibold" x-text="f.species || '(no species)'"></div>
+            <div class="text-sm text-slate-500"
+                 x-text="f.photos.length + (f.photos.length === 1 ? ' photo' : ' photos') + (f.length ? ' · ' + f.length + ' cm' : '')"></div>
+          </div>
+        </div>
+      </template>
+      <div class="text-center text-slate-500 py-10" x-show="!filtered.length"
+           x-text="records.length ? 'No matches.' : 'No fish yet. Tap “+ New fish” to start.'"></div>
+    </section>
+
+    <!-- Editor pane -->
+    <section class="overflow-auto p-3.5" :class="editing ? '' : 'hidden md:block'">
+      <div class="bg-white rounded-2xl p-4 shadow-sm max-w-4xl" x-show="cur">
+        <h2 class="text-lg font-bold mb-3" x-text="cur && cur.isNew ? 'New fish' : 'Edit fish'"></h2>
+
+        <span class="lbl">Photos (take several angles of the same fish)</span>
+        <div class="flex flex-wrap gap-2.5">
+          <button type="button" class="btn" @click="$refs.cam.click()">Take photo</button>
+          <button type="button" class="btn btn-ghost" @click="$refs.gal.click()">Add from gallery</button>
+        </div>
+        <input x-ref="cam" type="file" accept="image/*" capture="environment" hidden
+               @change="addFiles($event.target.files); $event.target.value = ''">
+        <input x-ref="gal" type="file" accept="image/*" multiple hidden
+               @change="addFiles($event.target.files); $event.target.value = ''">
+
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 my-3">
+          <template x-for="(p, i) in (cur ? cur.photos : [])" :key="p.id">
+            <div class="relative bg-slate-50 border border-line rounded-xl p-1.5">
+              <img class="w-full aspect-[4/3] object-cover rounded-lg block" :src="url(p.blob)" alt="">
+              <button type="button" aria-label="Remove photo"
+                      class="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-black/65 text-white text-xl leading-none"
+                      @click="cur.photos.splice(i, 1)">&times;</button>
+              <select class="field !min-h-[40px] mt-1.5 !py-1" x-model="p.view">
+                <option value="side">Side view</option><option value="top">Top view</option>
+                <option value="head">Head view</option><option value="tail">Tail view</option>
+                <option value="fins">Fins view</option><option value="belly">Belly view</option>
+                <option value="other">Other view</option>
+              </select>
+            </div>
+          </template>
+        </div>
+
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 mb-3">
+          <div>
+            <label class="lbl" for="species">Species / type of fish *</label>
+            <input id="species" class="field" type="text" list="speciesList" autocomplete="off"
+                   placeholder="e.g. Barramundi" x-model="cur.species">
+            <datalist id="speciesList">
+              <template x-for="s in speciesOptions" :key="s"><option :value="s"></option></template>
+            </datalist>
+          </div>
+          <div>
+            <label class="lbl" for="scientific">Scientific name</label>
+            <input id="scientific" class="field" type="text" placeholder="e.g. Lates calcarifer" x-model="cur.scientific">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 mb-3">
+          <div><label class="lbl" for="length">Length (cm)</label>
+            <input id="length" class="field" type="number" step="0.1" min="0" inputmode="decimal" x-model="cur.length"></div>
+          <div><label class="lbl" for="weight">Weight (g)</label>
+            <input id="weight" class="field" type="number" step="1" min="0" inputmode="decimal" x-model="cur.weight"></div>
+          <div><label class="lbl" for="sex">Sex</label>
+            <select id="sex" class="field" x-model="cur.sex">
+              <option value="">Unknown</option><option>Male</option><option>Female</option><option>Juvenile</option>
+            </select></div>
+        </div>
+
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 mb-3">
+          <div><label class="lbl" for="colours">Body colours</label>
+            <input id="colours" class="field" type="text" placeholder="silver, olive back, white belly" x-model="cur.colours"></div>
+          <div><label class="lbl" for="markings">Markings / patterns</label>
+            <input id="markings" class="field" type="text" placeholder="spots, stripes, scale pattern" x-model="cur.markings"></div>
+          <div><label class="lbl" for="features">Fins, tail &amp; mouth</label>
+            <input id="features" class="field" type="text" placeholder="forked tail, large mouth, dorsal spines" x-model="cur.features"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="lbl" for="description">Description / notes</label>
+          <textarea id="description" class="field min-h-[90px]" placeholder="Anything else that helps identify this fish" x-model="cur.description"></textarea>
+        </div>
+
+        <div class="flex flex-wrap gap-2.5">
+          <button class="btn" :disabled="adding" @click="save(false)">Save</button>
+          <button class="btn btn-ghost" :disabled="adding" @click="save(true)">Save &amp; add another</button>
+          <button class="btn btn-danger ml-auto" x-show="!cur.isNew" @click="remove()">Delete</button>
+        </div>
+        <p class="text-[13px] text-slate-500 mt-3">Everything is stored on this tablet. Use “Export dataset” to get a ZIP with images and labels for training.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Toast -->
+<div x-show="toastMsg" x-transition.opacity x-text="toastMsg"
+     class="fixed left-1/2 -translate-x-1/2 bottom-6 bg-ink text-white px-5 py-3 rounded-full z-50"></div>
+
+<style>[x-cloak]{display:none !important}</style>
+</body>
+</html>

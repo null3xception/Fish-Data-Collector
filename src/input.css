@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn { @apply min-h-[48px] px-5 rounded-xl font-semibold bg-brand-light text-white active:opacity-80 disabled:opacity-50; }
+  .btn-light { @apply bg-white text-brand; }
+  .btn-ghost { @apply bg-transparent text-brand border-2 border-brand; }
+  .btn-danger { @apply bg-red-700; }
+  .field { @apply w-full min-h-[48px] px-3 py-2 border border-line rounded-xl bg-white; }
+  .lbl { @apply block text-[13px] font-semibold text-slate-500 mb-1; }
+}
