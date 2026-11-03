@@ -1,4 +1,4 @@
-const CACHE = 'fish-collector-v5';
+const CACHE = 'fish-collector-v6';
 const ASSETS = ['./', './index.html', './app.js', './tailwind.css', './vendor/alpine.min.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './fonts/montserrat-latin-wght.woff2', './fonts/montserrat-latin-wght-italic.woff2'];
 
 self.addEventListener('install', e => {

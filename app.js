@@ -87,6 +87,10 @@ function buildZip(files) {
   return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
 }
 
+// restart a CSS entrance animation on an element that is already on screen
+const replay = (el, cls) => { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+const narrow = () => matchMedia('(max-width: 767px)').matches;
+
 /* ---------- Alpine component ---------- */
 document.addEventListener('alpine:init', () => {
   const urlCache = new WeakMap();
@@ -102,15 +106,22 @@ document.addEventListener('alpine:init', () => {
     adding: false,    // true while photos are being processed
     toastMsg: '',
     _toastTimer: null,
+    ready: false,     // hides the loading skeleton
+    savedUid: null,   // briefly highlights the fish card that was just saved
 
     async init() {
-      db = await openDB();
-      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
-      if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
-      // give fish saved before tablet IDs existed a permanent ID
-      const all = await dbAll(), old = all.filter(f => !f.device || !f.seq).sort((a, b) => a.createdAt - b.createdAt);
-      for (const f of old) { f.device = f.device || this.device; f.seq = nextSeq(all); await dbPut(f); }
-      await this.reload();
+      // narrow screens: slide the pane that comes into view from the side it lives on
+      this.$watch('editing', v => { if (narrow()) replay(v ? this.$refs.editorPane : this.$refs.listPane, v ? 'enter-r' : 'enter-l'); });
+      try {
+        db = await openDB();
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+        // give fish saved before tablet IDs existed a permanent ID
+        const all = await dbAll(), old = all.filter(f => !f.device || !f.seq).sort((a, b) => a.createdAt - b.createdAt);
+        for (const f of old) { f.device = f.device || this.device; f.seq = nextSeq(all); await dbPut(f); }
+        await this.reload();
+      } catch (e) { console.error(e); this.toast('Could not open storage: ' + e.message); }
+      this.ready = true;
     },
 
     /* derived */
@@ -157,18 +168,24 @@ document.addEventListener('alpine:init', () => {
     open(f) {
       const c = Alpine.raw(f);
       this.cur = { ...c, isNew: false, photos: c.photos.map(p => ({ ...p })) };
-      this.editing = true;
+      this.editing = true; this.swapEditor();
     },
     startNew(carry) {
-      this.cur = blankFish(carry); this.editing = true;
+      this.cur = blankFish(carry); this.editing = true; this.swapEditor();
+    },
+    swapEditor() { // fresh form content fades in so switching fish reads as a change
+      this.$nextTick(() => { replay(this.$refs.editor, 'swap'); if (this.$refs.strip) this.$refs.strip.scrollLeft = 0; });
     },
     async addFiles(fileList) {
-      this.adding = true;
+      // keep the newest photo (and the processing placeholder) in view
+      const toEnd = () => this.$nextTick(() => { const s = this.$refs.strip; if (s) s.scrollTo({ left: s.scrollWidth, behavior: 'smooth' }); });
+      this.adding = true; toEnd();
       for (const f of [...fileList]) {
         try {
           const blob = await shrink(f);
           this.cur.photos.push({ id: uuid(), blob, view: VIEWS[Math.min(this.cur.photos.length, VIEWS.length - 1)] });
         } catch (e) { this.toast('Could not read one image'); }
+        toEnd();
       }
       this.adding = false;
     },
@@ -180,9 +197,10 @@ document.addEventListener('alpine:init', () => {
       const rec = this.plain(this.cur);
       await dbPut(rec);
       this.toast('Saved');
-      if (addAnother) this.cur = blankFish({ species: rec.species, scientific: rec.scientific });
+      if (addAnother) { this.cur = blankFish({ species: rec.species, scientific: rec.scientific }); this.swapEditor(); }
       else this.cur = { ...rec, isNew: false, photos: rec.photos.map(p => ({ ...p })) };
       await this.reload();
+      this.savedUid = rec.uid; setTimeout(() => { if (this.savedUid === rec.uid) this.savedUid = null; }, 1500);
     },
     async remove() {
       if (!confirm('Delete this fish and its photos?')) return;

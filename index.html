@@ -9,14 +9,60 @@
 <link rel="preload" href="fonts/montserrat-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="tailwind.css">
 <title>Fish Data Collector</title>
+<style>html{background:#eef3f2}[x-cloak]{display:none !important}</style>
 <script defer src="app.js"></script>
 <script defer src="vendor/alpine.min.js"></script>
 </head>
-<body class="bg-mist text-ink h-full m-0 font-sans" x-data="fishApp" x-cloak>
+<body class="bg-mist text-ink h-full m-0 font-sans" x-data="fishApp">
 
-<div class="flex flex-col h-screen">
+<!-- Loading skeleton: plain HTML so it shows before scripts run; fades out once the fish are loaded -->
+<div class="boot fixed inset-0 z-40 flex flex-col bg-mist" :class="ready && 'boot-done'" aria-hidden="true">
+  <div class="bg-lagoon flex items-center gap-2.5 px-3 sm:px-5 py-2.5 min-h-[68px]">
+    <span class="hidden sm:grid place-items-center w-10 h-10 rounded-xl bg-coral-bright text-white shrink-0">
+      <svg class="icon w-6 h-6" viewBox="0 0 24 24"><path d="M2 16s9-15 20-4C11 23 2 8 2 8"/></svg>
+    </span>
+    <div class="flex-1 min-w-0">
+      <div class="text-lg font-semibold text-white leading-tight truncate">Fish Data Collector</div>
+      <div class="sk-dark hidden sm:block h-3 w-24 rounded mt-1.5"></div>
+    </div>
+    <div class="sk-dark h-11 w-[88px] rounded-xl"></div>
+    <div class="sk-dark h-11 w-11 lg:w-[150px] rounded-xl"></div>
+    <div class="sk-dark h-12 w-12 sm:w-[124px] rounded-xl"></div>
+  </div>
+  <div class="flex-1 min-h-0 grid md:grid-cols-[minmax(320px,36%)_1fr]">
+    <div class="p-4 md:border-r border-line overflow-hidden">
+      <div class="h-11 rounded-xl bg-white border border-line mb-4"></div>
+      <div class="flex gap-3.5 items-center rounded-2xl p-2.5 mb-2.5 bg-white shadow-card"><div class="sk w-[76px] h-[76px] rounded-xl shrink-0"></div><div class="flex-1"><div class="sk h-4 w-3/5 rounded"></div><div class="sk h-3 w-4/5 rounded mt-2"></div><div class="sk h-5 w-2/5 rounded-md mt-2.5"></div></div></div>
+      <div class="flex gap-3.5 items-center rounded-2xl p-2.5 mb-2.5 bg-white shadow-card"><div class="sk w-[76px] h-[76px] rounded-xl shrink-0"></div><div class="flex-1"><div class="sk h-4 w-1/2 rounded"></div><div class="sk h-3 w-3/5 rounded mt-2"></div><div class="sk h-5 w-2/5 rounded-md mt-2.5"></div></div></div>
+      <div class="flex gap-3.5 items-center rounded-2xl p-2.5 mb-2.5 bg-white shadow-card"><div class="sk w-[76px] h-[76px] rounded-xl shrink-0"></div><div class="flex-1"><div class="sk h-4 w-2/3 rounded"></div><div class="sk h-3 w-1/2 rounded mt-2"></div><div class="sk h-5 w-2/5 rounded-md mt-2.5"></div></div></div>
+      <div class="flex gap-3.5 items-center rounded-2xl p-2.5 mb-2.5 bg-white shadow-card opacity-70"><div class="sk w-[76px] h-[76px] rounded-xl shrink-0"></div><div class="flex-1"><div class="sk h-4 w-2/5 rounded"></div><div class="sk h-3 w-3/5 rounded mt-2"></div><div class="sk h-5 w-2/5 rounded-md mt-2.5"></div></div></div>
+      <div class="flex gap-3.5 items-center rounded-2xl p-2.5 mb-2.5 bg-white shadow-card opacity-40"><div class="sk w-[76px] h-[76px] rounded-xl shrink-0"></div><div class="flex-1"><div class="sk h-4 w-1/2 rounded"></div><div class="sk h-3 w-2/3 rounded mt-2"></div><div class="sk h-5 w-2/5 rounded-md mt-2.5"></div></div></div>
+    </div>
+    <div class="hidden md:flex flex-col bg-white overflow-hidden">
+      <div class="max-w-4xl mx-auto px-8 pt-5">
+        <div class="sk h-7 w-36 rounded-lg mb-4"></div>
+        <div class="divide-y divide-line">
+          <div class="ed-row"><div class="sk h-4 w-16 rounded mb-2.5 lg:mb-0"></div>
+            <div class="flex gap-3"><div class="sk w-[112px] h-[126px] rounded-xl shrink-0"></div><div class="sk w-[112px] h-[126px] rounded-xl shrink-0"></div><div class="sk w-[112px] h-[126px] rounded-xl shrink-0 opacity-60"></div></div></div>
+          <div class="ed-row"><div class="sk h-4 w-24 rounded mb-2.5 lg:mb-0"></div>
+            <div class="grid sm:grid-cols-2 gap-3"><div><div class="sk h-3 w-28 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div><div><div class="sk h-3 w-24 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div></div></div>
+          <div class="ed-row"><div class="sk h-4 w-28 rounded mb-2.5 lg:mb-0"></div>
+            <div class="grid grid-cols-3 gap-3"><div><div class="sk h-3 w-20 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div><div><div class="sk h-3 w-20 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div><div><div class="sk h-3 w-10 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div></div></div>
+          <div class="ed-row"><div class="sk h-4 w-24 rounded mb-2.5 lg:mb-0"></div>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"><div><div class="sk h-3 w-24 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div><div><div class="sk h-3 w-28 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div><div><div class="sk h-3 w-24 rounded mb-2"></div><div class="h-11 rounded-xl border border-line"></div></div></div></div>
+          <div class="ed-row"><div class="sk h-4 w-24 rounded mb-2.5 lg:mb-0"></div><div class="h-[68px] rounded-xl border border-line"></div></div>
+        </div>
+      </div>
+      <div class="mt-auto border-t border-line shadow-bar">
+        <div class="max-w-4xl mx-auto px-8 py-3 flex gap-2.5"><div class="sk h-12 w-[104px] rounded-xl"></div><div class="h-12 w-[200px] rounded-xl border border-line"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flex flex-col h-screen" x-cloak>
   <!-- Header -->
-  <header class="bg-lagoon text-white flex items-center gap-2 sm:gap-2.5 px-3 sm:px-5 min-h-[68px]">
+  <header class="bg-lagoon text-white flex items-center gap-2 sm:gap-2.5 px-3 sm:px-5 py-2.5 min-h-[68px]">
     <button class="btn btn-bar btn-icon md:hidden" x-show="editing" @click="editing = false" aria-label="Back to list">
       <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
     </button>
@@ -34,7 +80,8 @@
       <span class="tabular-nums" x-text="device"></span>
     </button>
     <button class="btn btn-bar" :disabled="busy" @click="exportDataset()" aria-label="Export dataset">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      <svg class="icon" :class="busy && 'hidden'" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      <svg class="icon animate-spin" :class="!busy && 'hidden'" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
       <span class="hidden lg:inline" x-text="busy ? 'Exporting…' : 'Export dataset'"></span>
     </button>
     <button class="btn btn-cta" @click="startNew()" aria-label="New fish">
@@ -43,17 +90,18 @@
     </button>
   </header>
 
-  <div class="flex-1 min-h-0 grid md:grid-cols-[minmax(320px,36%)_1fr]">
+  <div class="flex-1 min-h-0 grid md:grid-cols-[minmax(320px,36%)_1fr] overflow-hidden">
     <!-- List pane -->
-    <section class="overflow-auto p-4 md:border-r border-line" :class="editing ? 'hidden md:block' : ''">
+    <section x-ref="listPane" class="overflow-auto p-4 md:border-r border-line flex flex-col" :class="editing ? 'hidden md:flex' : ''">
       <div class="relative mb-4">
         <svg class="icon absolute left-3.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input type="search" class="field pl-11" placeholder="Search species or notes…" aria-label="Search fish" x-model="search">
       </div>
-      <template x-for="f in filtered" :key="f.uid">
+      <template x-for="(f, i) in filtered" :key="f.uid">
         <button type="button"
-                class="w-full text-left flex gap-3.5 items-center rounded-2xl p-2.5 pr-4 mb-2.5 shadow-card ring-2 ring-inset transition duration-150 hover:shadow-lift"
-                :class="cur && cur.uid === f.uid ? 'bg-brand-faint ring-brand' : 'bg-white ring-transparent'"
+                class="card-in w-full text-left flex gap-3.5 items-center rounded-2xl p-2.5 pr-4 mb-2.5 shadow-card ring-2 ring-inset transition duration-150 hover:shadow-lift active:scale-[0.99]"
+                :class="[cur && cur.uid === f.uid ? 'bg-brand-faint ring-brand' : 'bg-white ring-transparent', savedUid === f.uid && 'just-saved']"
+                :style="'--i:' + Math.min(i, 8)"
                 @click="open(f)">
           <template x-if="f.photos[0]">
             <img class="w-[76px] h-[76px] object-cover rounded-xl bg-line shrink-0" :src="url(f.photos[0].blob)" alt="">
@@ -73,125 +121,129 @@
           </span>
         </button>
       </template>
-      <div class="flex flex-col items-center text-center text-muted py-14 px-6" x-show="!filtered.length">
+      <div class="card-in flex flex-col items-center text-center text-muted py-14 px-6" x-show="!filtered.length">
         <span class="grid place-items-center w-14 h-14 rounded-2xl bg-brand-soft text-brand mb-4">
           <svg class="icon w-7 h-7" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 16s9-15 20-4C11 23 2 8 2 8"/></svg>
         </span>
         <p class="max-w-[28ch]" x-text="records.length ? 'No matches.' : 'No fish yet. Tap “New fish” to start.'"></p>
       </div>
+      <p class="mt-auto pt-4 text-[13px] text-muted">Everything is stored on this tablet. Use “Export dataset” to get a ZIP with images and labels for training.</p>
     </section>
 
     <!-- Editor pane -->
-    <section class="overflow-auto bg-white" :class="editing ? '' : 'hidden md:block'">
-      <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-6" x-show="cur">
-        <div class="flex flex-wrap items-center gap-3 mb-6">
-          <h2 class="text-2xl font-semibold tracking-[-0.02em]" x-text="cur && cur.isNew ? 'New fish' : 'Edit fish'"></h2>
+    <section x-ref="editorPane" class="overflow-auto bg-white flex flex-col" :class="editing ? '' : 'hidden md:flex'">
+      <div x-ref="editor" class="flex-1 w-full max-w-4xl mx-auto px-5 sm:px-8 pt-4 lg:pt-5" x-show="cur">
+        <div class="flex flex-wrap items-center gap-3 mb-2">
+          <h2 class="text-xl font-semibold tracking-[-0.02em]" x-text="cur && cur.isNew ? 'New fish' : 'Edit fish'"></h2>
           <span class="tabular-nums text-sm font-medium text-brand-dark bg-brand-soft px-2.5 py-1 rounded-lg"
                 x-show="cur && !cur.isNew && fishId(cur)" x-text="fishId(cur)"></span>
         </div>
 
-        <div class="section">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <h3 class="section-title !mb-1">Photos</h3>
-              <p class="text-sm text-muted">Take several angles of the same fish and tag each view.</p>
+        <div class="divide-y divide-line">
+          <div class="ed-row">
+            <div class="mb-2.5 lg:mb-0">
+              <h3 class="section-title">Photos</h3>
+              <p class="hidden lg:block text-[13px] leading-snug text-muted mt-1">Several angles, each tagged with its view.</p>
             </div>
-            <div class="flex flex-wrap gap-2.5">
-              <button type="button" class="btn" @click="$refs.cam.click()">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            <div x-ref="strip" class="flex gap-3 overflow-x-auto overscroll-x-contain pb-1.5 -mb-1.5 snap-x">
+              <button type="button" class="photo-act snap-start bg-brand text-white hover:bg-brand-dark" @click="$refs.cam.click()">
+                <svg class="icon w-7 h-7" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
                 Take photo
               </button>
-              <button type="button" class="btn btn-ghost" @click="$refs.gal.click()">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
+              <button type="button" class="photo-act snap-start bg-white text-brand ring-1 ring-inset ring-line hover:bg-brand-faint hover:ring-brand/40" @click="$refs.gal.click()">
+                <svg class="icon w-7 h-7" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></svg>
                 Add from gallery
               </button>
-            </div>
-          </div>
-          <input x-ref="cam" type="file" accept="image/*" capture="environment" hidden
-                 @change="addFiles($event.target.files); $event.target.value = ''">
-          <input x-ref="gal" type="file" accept="image/*" multiple hidden
-                 @change="addFiles($event.target.files); $event.target.value = ''">
-
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4" x-show="cur && cur.photos.length">
-            <template x-for="(p, i) in (cur ? cur.photos : [])" :key="p.id">
-              <div class="relative">
-                <img class="w-full aspect-[4/3] object-cover rounded-xl bg-line block shadow-card" :src="url(p.blob)" alt="">
-                <button type="button" aria-label="Remove photo"
-                        class="absolute top-2 right-2 grid place-items-center w-9 h-9 rounded-full bg-ink/70 text-white transition hover:bg-danger"
-                        @click="cur.photos.splice(i, 1)">
-                  <svg class="icon w-[18px] h-[18px]" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-                <select class="field !min-h-[40px] mt-2 !py-1 text-sm" x-model="p.view" aria-label="Photo view">
-                  <option value="side">Side view</option><option value="top">Top view</option>
-                  <option value="head">Head view</option><option value="tail">Tail view</option>
-                  <option value="fins">Fins view</option><option value="belly">Belly view</option>
-                  <option value="other">Other view</option>
-                </select>
+              <template x-for="(p, i) in (cur ? cur.photos : [])" :key="p.id">
+                <div class="pop relative w-[112px] shrink-0 snap-start">
+                  <img class="w-full h-[84px] object-cover rounded-xl bg-line block shadow-card" :src="url(p.blob)" alt="">
+                  <button type="button" aria-label="Remove photo"
+                          class="absolute top-1.5 right-1.5 grid place-items-center w-8 h-8 rounded-full bg-ink/70 text-white transition hover:bg-danger active:scale-90"
+                          @click="cur.photos.splice(i, 1)">
+                    <svg class="icon w-4 h-4" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  </button>
+                  <select class="field !min-h-[36px] mt-1.5 !py-0 !px-2 text-[13px]" x-model="p.view" aria-label="Photo view">
+                    <option value="side">Side view</option><option value="top">Top view</option>
+                    <option value="head">Head view</option><option value="tail">Tail view</option>
+                    <option value="fins">Fins view</option><option value="belly">Belly view</option>
+                    <option value="other">Other view</option>
+                  </select>
+                </div>
+              </template>
+              <div class="pop w-[112px] shrink-0" :class="!adding && 'hidden'" role="status" aria-label="Processing photo">
+                <div class="sk h-[84px] rounded-xl"></div>
+                <div class="sk h-9 rounded-xl mt-1.5"></div>
               </div>
-            </template>
-          </div>
-          <div class="flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-line bg-brand-faint py-9 text-sm text-muted"
-               x-show="cur && !cur.photos.length && !adding">
-            <svg class="icon w-7 h-7 text-brand" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-            No photos yet
-          </div>
-          <p class="mt-3 text-sm font-medium text-brand" x-show="adding">Processing photos…</p>
-        </div>
-
-        <div class="section">
-          <h3 class="section-title">Identification</h3>
-          <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4">
-            <div>
-              <label class="lbl" for="species">Species / type of fish <span class="text-coral">*</span></label>
-              <input id="species" class="field" type="text" list="speciesList" autocomplete="off"
-                     placeholder="e.g. Barramundi" x-model="cur.species">
-              <datalist id="speciesList">
-                <template x-for="s in speciesOptions" :key="s"><option :value="s"></option></template>
-              </datalist>
+              <div class="flex-1 min-w-[150px] grid place-items-center rounded-xl border-2 border-dashed border-line bg-brand-faint px-4 text-center text-[13px] text-muted"
+                   :class="(cur.photos.length || adding) && 'hidden'">
+                No photos yet. Take several angles of the same fish and tag each view.
+              </div>
             </div>
-            <div>
-              <label class="lbl" for="scientific">Scientific name</label>
-              <input id="scientific" class="field italic" type="text" placeholder="e.g. Lates calcarifer" x-model="cur.scientific">
+            <input x-ref="cam" type="file" accept="image/*" capture="environment" hidden
+                   @change="addFiles($event.target.files); $event.target.value = ''">
+            <input x-ref="gal" type="file" accept="image/*" multiple hidden
+                   @change="addFiles($event.target.files); $event.target.value = ''">
+          </div>
+
+          <div class="ed-row">
+            <h3 class="section-title mb-2.5 lg:mb-0">Identification</h3>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label class="lbl" for="species">Species / type of fish <span class="text-coral">*</span></label>
+                <input id="species" class="field" type="text" list="speciesList" autocomplete="off"
+                       placeholder="e.g. Barramundi" x-model="cur.species">
+                <datalist id="speciesList">
+                  <template x-for="s in speciesOptions" :key="s"><option :value="s"></option></template>
+                </datalist>
+              </div>
+              <div>
+                <label class="lbl" for="scientific">Scientific name</label>
+                <input id="scientific" class="field italic" type="text" placeholder="e.g. Lates calcarifer" x-model="cur.scientific">
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="section">
-          <h3 class="section-title">Measurements</h3>
-          <div class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
-            <div><label class="lbl" for="length">Length (cm)</label>
-              <input id="length" class="field" type="number" step="0.1" min="0" inputmode="decimal" x-model="cur.length"></div>
-            <div><label class="lbl" for="weight">Weight (g)</label>
-              <input id="weight" class="field" type="number" step="1" min="0" inputmode="decimal" x-model="cur.weight"></div>
-            <div><label class="lbl" for="sex">Sex</label>
-              <select id="sex" class="field" x-model="cur.sex">
-                <option value="">Unknown</option><option>Male</option><option>Female</option><option>Juvenile</option>
-              </select></div>
+          <div class="ed-row">
+            <h3 class="section-title mb-2.5 lg:mb-0">Measurements</h3>
+            <div class="grid grid-cols-3 gap-3">
+              <div><label class="lbl" for="length">Length (cm)</label>
+                <input id="length" class="field" type="number" step="0.1" min="0" inputmode="decimal" x-model="cur.length"></div>
+              <div><label class="lbl" for="weight">Weight (g)</label>
+                <input id="weight" class="field" type="number" step="1" min="0" inputmode="decimal" x-model="cur.weight"></div>
+              <div><label class="lbl" for="sex">Sex</label>
+                <select id="sex" class="field" x-model="cur.sex">
+                  <option value="">Unknown</option><option>Male</option><option>Female</option><option>Juvenile</option>
+                </select></div>
+            </div>
+          </div>
+
+          <div class="ed-row">
+            <h3 class="section-title mb-2.5 lg:mb-0">Appearance</h3>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div><label class="lbl" for="colours">Body colours</label>
+                <input id="colours" class="field" type="text" placeholder="silver, olive back, white belly" x-model="cur.colours"></div>
+              <div><label class="lbl" for="markings">Markings / patterns</label>
+                <input id="markings" class="field" type="text" placeholder="spots, stripes, scale pattern" x-model="cur.markings"></div>
+              <div class="sm:col-span-2 lg:col-span-1"><label class="lbl" for="features">Fins, tail &amp; mouth</label>
+                <input id="features" class="field" type="text" placeholder="forked tail, large mouth, dorsal spines" x-model="cur.features"></div>
+            </div>
+          </div>
+
+          <div class="ed-row">
+            <label class="section-title block mb-2.5 lg:mb-0" for="description">Description / notes</label>
+            <textarea id="description" class="field h-[68px] min-h-[68px] py-2.5 resize-y" rows="2" placeholder="Anything else that helps identify this fish" x-model="cur.description"></textarea>
           </div>
         </div>
+      </div>
 
-        <div class="section">
-          <h3 class="section-title">Appearance</h3>
-          <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-4">
-            <div><label class="lbl" for="colours">Body colours</label>
-              <input id="colours" class="field" type="text" placeholder="silver, olive back, white belly" x-model="cur.colours"></div>
-            <div><label class="lbl" for="markings">Markings / patterns</label>
-              <input id="markings" class="field" type="text" placeholder="spots, stripes, scale pattern" x-model="cur.markings"></div>
-            <div><label class="lbl" for="features">Fins, tail &amp; mouth</label>
-              <input id="features" class="field" type="text" placeholder="forked tail, large mouth, dorsal spines" x-model="cur.features"></div>
-          </div>
-          <label class="lbl" for="description">Description / notes</label>
-          <textarea id="description" class="field min-h-[110px] py-3" placeholder="Anything else that helps identify this fish" x-model="cur.description"></textarea>
-          <p class="text-[13px] text-muted mt-5">Everything is stored on this tablet. Use “Export dataset” to get a ZIP with images and labels for training.</p>
-        </div>
-
-        <div class="sticky bottom-0 -mx-5 sm:-mx-8 px-5 sm:px-8 py-3 bg-white/95 border-t border-line shadow-bar flex flex-wrap gap-2.5 items-center">
+      <div class="sticky bottom-0 w-full bg-white/95 border-t border-line shadow-bar">
+        <div class="max-w-4xl mx-auto px-5 sm:px-8 py-3 flex gap-2.5 items-center">
           <button class="btn" :disabled="adding" @click="save(false)">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
             Save
           </button>
           <button class="btn btn-ghost" :disabled="adding" @click="save(true)"><span class="sm:hidden">Save &amp; new</span><span class="hidden sm:inline">Save &amp; add another</span></button>
-          <button class="btn btn-danger ml-auto max-lg:px-0 max-lg:w-12" x-show="!cur.isNew" @click="remove()" aria-label="Delete fish">
+          <button class="btn btn-danger ml-auto max-lg:px-0 max-lg:w-12" :class="cur.isNew && 'hidden'" @click="remove()" aria-label="Delete fish">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
             <span class="hidden lg:inline">Delete</span>
           </button>
@@ -202,14 +254,12 @@
 </div>
 
 <!-- Toast -->
-<div x-show="toastMsg" role="status"
+<div x-show="toastMsg" role="status" x-cloak
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-3"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-end="opacity-0"
      class="fixed left-1/2 -translate-x-1/2 bottom-24 flex items-center gap-2.5 bg-ink text-white text-[15px] font-medium px-5 py-3 rounded-full shadow-lift z-50">
   <span class="w-2 h-2 rounded-full bg-coral-bright"></span>
   <span x-text="toastMsg"></span>
 </div>
-
-<style>[x-cloak]{display:none !important}</style>
 </body>
 </html>
