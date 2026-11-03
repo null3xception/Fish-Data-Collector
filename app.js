@@ -133,6 +133,7 @@ document.addEventListener('alpine:init', () => {
       return this.records.filter(f => !q || [f.species, f.scientific, f.description, f.colours].join(' ').toLowerCase().includes(q));
     },
     fishId,
+    recordedOn: f => new Date(f.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }),
     get speciesOptions() {
       return [...new Set(this.records.map(f => f.species).filter(Boolean))].sort();
     },
@@ -174,18 +175,15 @@ document.addEventListener('alpine:init', () => {
       this.cur = blankFish(carry); this.editing = true; this.swapEditor();
     },
     swapEditor() { // fresh form content fades in so switching fish reads as a change
-      this.$nextTick(() => { replay(this.$refs.editor, 'swap'); if (this.$refs.strip) this.$refs.strip.scrollLeft = 0; });
+      this.$nextTick(() => replay(this.$refs.editor, 'swap'));
     },
     async addFiles(fileList) {
-      // keep the newest photo (and the processing placeholder) in view
-      const toEnd = () => this.$nextTick(() => { const s = this.$refs.strip; if (s) s.scrollTo({ left: s.scrollWidth, behavior: 'smooth' }); });
-      this.adding = true; toEnd();
+      this.adding = true;
       for (const f of [...fileList]) {
         try {
           const blob = await shrink(f);
           this.cur.photos.push({ id: uuid(), blob, view: VIEWS[Math.min(this.cur.photos.length, VIEWS.length - 1)] });
         } catch (e) { this.toast('Could not read one image'); }
-        toEnd();
       }
       this.adding = false;
     },
