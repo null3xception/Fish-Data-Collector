@@ -40,7 +40,8 @@ Export regularly and copy the ZIP off the tablet as a backup; clearing Chrome's 
 
 ## Tech stack
 - **Alpine.js 3** (`vendor/alpine.min.js`, bundled locally so it works offline) for interactivity
-- **Tailwind CSS 3** compiled to a static `tailwind.css` (no CDN needed)
+- **Tailwind CSS 3** compiled to a static `tailwind.css` (no CDN needed); palette and fonts are in `src/tailwind.config.js`
+- **Montserrat** variable font (upright + italic) bundled in `fonts/` (SIL Open Font License, see `fonts/OFL.txt`) so it works offline
 - App logic is in `app.js`, markup in `index.html`, offline caching in `sw.js`
 
 ## Changing the styling

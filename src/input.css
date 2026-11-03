@@ -1,12 +1,48 @@
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/montserrat-latin-wght.woff2) format('woff2-variations');
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(fonts/montserrat-latin-wght-italic.woff2) format('woff2-variations');
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { @apply antialiased; caret-color: theme('colors.brand.DEFAULT'); }
+  ::selection { background: theme('colors.brand.soft'); color: theme('colors.ink'); }
+  :focus-visible { outline: 3px solid theme('colors.brand.DEFAULT'); outline-offset: 2px; }
+  input::placeholder, textarea::placeholder { color: #5f7377; opacity: 1; }
+  input[type=number] { font-variant-numeric: tabular-nums; }
+  * { scrollbar-width: thin; scrollbar-color: #b9cbc8 transparent; }
+}
+
 @layer components {
-  .btn { @apply min-h-[48px] px-5 rounded-xl font-semibold bg-brand-light text-white active:opacity-80 disabled:opacity-50; }
-  .btn-light { @apply bg-white text-brand; }
-  .btn-ghost { @apply bg-transparent text-brand border-2 border-brand; }
-  .btn-danger { @apply bg-red-700; }
-  .field { @apply w-full min-h-[48px] px-3 py-2 border border-line rounded-xl bg-white; }
-  .lbl { @apply block text-[13px] font-semibold text-slate-500 mb-1; }
+  .icon { @apply w-5 h-5 shrink-0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .btn { @apply inline-flex items-center justify-center gap-2 min-h-[48px] px-5 rounded-xl font-medium text-[15px] tracking-[0.01em]
+               bg-brand text-white shadow-card transition duration-150 ease-out
+               hover:bg-brand-dark active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-cta { @apply bg-coral hover:bg-[#a83a17]; }
+  .btn-ghost { @apply bg-white text-brand ring-1 ring-inset ring-line shadow-none hover:bg-brand-faint hover:ring-brand/40; }
+  .btn-danger { @apply bg-white text-danger ring-1 ring-inset ring-[#f1c7c2] shadow-none hover:bg-[#fdf1ef]; }
+  .btn-bar { @apply min-h-[44px] px-4 bg-white/10 text-white ring-1 ring-inset ring-white/25 shadow-none hover:bg-white/20; }
+  .btn-icon { @apply px-0 w-11; }
+
+  .field { @apply w-full min-h-[48px] px-3.5 py-2 rounded-xl bg-white text-ink text-base
+                 border border-line transition duration-150
+                 hover:border-[#b9cbc8] focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/15; }
+  .lbl { @apply block text-[13px] font-medium text-muted mb-1.5; }
+  .section-title { @apply text-[17px] font-semibold text-ink tracking-[-0.01em] mb-4; }
+  .section { @apply py-6 border-t border-line first:border-t-0 first:pt-0; }
 }

@@ -1,5 +1,5 @@
-const CACHE = 'fish-collector-v3';
-const ASSETS = ['./', './index.html', './app.js', './tailwind.css', './vendor/alpine.min.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'fish-collector-v5';
+const ASSETS = ['./', './index.html', './app.js', './tailwind.css', './vendor/alpine.min.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './fonts/montserrat-latin-wght.woff2', './fonts/montserrat-latin-wght-italic.woff2'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

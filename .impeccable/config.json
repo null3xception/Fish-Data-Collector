@@ -1,0 +1,23 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "montserrat",
+        "createdAt": "2026-11-03T07:33:47.140Z",
+        "reason": "user asked for Poppins or Montserrat; Montserrat chosen for tabular figures and variable italic"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-03T07:33:47.671Z",
+        "reason": "img src is bound at runtime via Alpine :src (always a photo blob); static scan cannot see it"
+      }
+    ]
+  }
+}
