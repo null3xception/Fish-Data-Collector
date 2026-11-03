@@ -31,6 +31,25 @@ const blankFish = (carry = {}) => ({
   uid: uuid(), createdAt: Date.now(), updatedAt: Date.now(), isNew: true, photos: [],
   ...Object.fromEntries(FIELDS.map(k => [k, carry[k] || ''])),
 });
+/* ---------- tablet identity (keeps IDs unique when exports from several tablets are merged) ---------- */
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+const cleanCode = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]+/g, '').slice(0, 10);
+const loadDevice = () => {
+  let c = cleanCode(store.get('fish-device'));
+  if (!c) { c = 'T' + uuid().replace(/-/g, '').slice(0, 5).toUpperCase(); store.set('fish-device', c); }
+  return c;
+};
+// counter only ever goes up, so a deleted fish's number is never reused
+const nextSeq = recs => {
+  const n = Math.max(Number(store.get('fish-seq')) || 0, ...recs.map(r => r.seq || 0)) + 1;
+  store.set('fish-seq', String(n));
+  return n;
+};
+const fishId = f => f.device && f.seq ? f.device + '-' + String(f.seq).padStart(4, '0') : '';
+
 const slug = s => (s || 'unknown').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'unknown';
 const csvCell = v => { v = String(v ?? ''); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
 
@@ -74,6 +93,7 @@ document.addEventListener('alpine:init', () => {
 
   Alpine.data('fishApp', () => ({
     views: VIEWS,
+    device: loadDevice(),
     records: [],
     cur: blankFish(),
     editing: false,   // narrow screens: show editor instead of list
@@ -87,6 +107,9 @@ document.addEventListener('alpine:init', () => {
       db = await openDB();
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
       if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+      // give fish saved before tablet IDs existed a permanent ID
+      const all = await dbAll(), old = all.filter(f => !f.device || !f.seq).sort((a, b) => a.createdAt - b.createdAt);
+      for (const f of old) { f.device = f.device || this.device; f.seq = nextSeq(all); await dbPut(f); }
       await this.reload();
     },
 
@@ -98,6 +121,7 @@ document.addEventListener('alpine:init', () => {
       const q = this.search.trim().toLowerCase();
       return this.records.filter(f => !q || [f.species, f.scientific, f.description, f.colours].join(' ').toLowerCase().includes(q));
     },
+    fishId,
     get speciesOptions() {
       return [...new Set(this.records.map(f => f.species).filter(Boolean))].sort();
     },
@@ -112,8 +136,15 @@ document.addEventListener('alpine:init', () => {
       this.toastMsg = msg; clearTimeout(this._toastTimer);
       this._toastTimer = setTimeout(() => this.toastMsg = '', 2200);
     },
+    renameDevice() {
+      const v = prompt('Tablet code (letters/numbers, e.g. T1). Every tablet must have a DIFFERENT code. It is used in fish IDs; fish already saved keep their old ID.', this.device);
+      if (v === null) return;
+      const c = cleanCode(v);
+      if (!c) { this.toast('Code must contain letters or numbers'); return; }
+      this.device = c; store.set('fish-device', c); this.toast('Tablet code set to ' + c);
+    },
     plain(f) { // strip Alpine proxies so IndexedDB can clone it
-      const out = { uid: f.uid, createdAt: f.createdAt, updatedAt: f.updatedAt };
+      const out = { uid: f.uid, device: f.device, seq: f.seq, createdAt: f.createdAt, updatedAt: f.updatedAt };
       FIELDS.forEach(k => out[k] = (f[k] ?? '').toString().trim());
       out.photos = f.photos.map(p => ({ id: p.id, view: p.view, blob: Alpine.raw(p.blob) }));
       return out;
@@ -145,6 +176,7 @@ document.addEventListener('alpine:init', () => {
       if (!this.cur.species.trim()) { this.toast('Please enter the species / type'); document.getElementById('species').focus(); return; }
       if (!this.cur.photos.length && !confirm('This fish has no photos. Save anyway?')) return;
       this.cur.updatedAt = Date.now();
+      if (!this.cur.seq) { this.cur.device = this.device; this.cur.seq = nextSeq(await dbAll()); }
       const rec = this.plain(this.cur);
       await dbPut(rec);
       this.toast('Saved');
@@ -166,27 +198,29 @@ document.addEventListener('alpine:init', () => {
       try {
         const recs = [...this.records].map(r => Alpine.raw(r)).sort((a, b) => a.createdAt - b.createdAt);
         const enc = new TextEncoder(), files = [], json = [];
-        const rows = [['image_file', 'fish_id', 'species', 'scientific_name', 'photo_view', 'length_cm', 'weight_g', 'sex', 'body_colours', 'markings', 'fins_tail_mouth', 'description', 'recorded_at'].join(',')];
-        for (let i = 0; i < recs.length; i++) {
-          const f = recs[i], id = 'fish_' + String(i + 1).padStart(4, '0'), dir = 'images/' + slug(f.species) + '/', imgs = [];
+        // fish_id (tablet code + number) and uid are fixed per fish, so merged exports can be de-duplicated
+        const rows = [['image_file', 'fish_id', 'uid', 'tablet', 'species', 'scientific_name', 'photo_view', 'length_cm', 'weight_g', 'sex', 'body_colours', 'markings', 'fins_tail_mouth', 'description', 'recorded_at', 'updated_at'].join(',')];
+        for (const f of recs) {
+          const id = fishId(f), dir = 'images/' + slug(f.species) + '/', imgs = [];
+          const rec = new Date(f.createdAt).toISOString(), upd = new Date(f.updatedAt).toISOString();
           for (let j = 0; j < f.photos.length; j++) {
             const name = dir + id + '_' + (j + 1) + '.jpg';
             files.push({ name, data: new Uint8Array(await f.photos[j].blob.arrayBuffer()) });
             imgs.push({ file: name, view: f.photos[j].view || '' });
-            rows.push([name, id, f.species, f.scientific, f.photos[j].view || '', f.length, f.weight, f.sex, f.colours, f.markings, f.features, f.description, new Date(f.createdAt).toISOString()].map(csvCell).join(','));
+            rows.push([name, id, f.uid, f.device, f.species, f.scientific, f.photos[j].view || '', f.length, f.weight, f.sex, f.colours, f.markings, f.features, f.description, rec, upd].map(csvCell).join(','));
           }
           json.push({
-            fish_id: id, uid: f.uid, species: f.species, scientific_name: f.scientific,
+            fish_id: id, uid: f.uid, tablet: f.device, species: f.species, scientific_name: f.scientific,
             length_cm: f.length === '' ? null : Number(f.length), weight_g: f.weight === '' ? null : Number(f.weight),
             sex: f.sex, body_colours: f.colours, markings: f.markings, fins_tail_mouth: f.features,
-            description: f.description, recorded_at: new Date(f.createdAt).toISOString(), images: imgs,
+            description: f.description, recorded_at: rec, updated_at: upd, images: imgs,
           });
         }
         files.push({ name: 'labels.csv', data: enc.encode('﻿' + rows.join('\r\n') + '\r\n') });
-        files.push({ name: 'records.json', data: enc.encode(JSON.stringify({ exported_at: new Date().toISOString(), fish_count: recs.length, records: json }, null, 2)) });
+        files.push({ name: 'records.json', data: enc.encode(JSON.stringify({ exported_at: new Date().toISOString(), tablet: this.device, fish_count: recs.length, records: json }, null, 2)) });
         const zip = buildZip(files);
         const p = n => String(n).padStart(2, '0'), d = new Date();
-        const fname = `fish-dataset-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.zip`;
+        const fname = `fish-dataset-${this.device}-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.zip`;
         const a = document.createElement('a'); a.href = URL.createObjectURL(zip); a.download = fname;
         document.body.appendChild(a); a.click();
         setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);

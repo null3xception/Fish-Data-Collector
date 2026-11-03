@@ -22,11 +22,21 @@ Chrome only allows "Install app" and offline mode on HTTPS or localhost, and a p
 ## Using it
 - **+ New fish**: take several photos (side/top/head/etc. — tag each one), enter species and traits, **Save** or **Save & add another** (keeps the species filled in for fast entry).
 - **Export dataset** downloads a ZIP:
-  - `images/<species>/fish_0001_1.jpg ...` (JPEG, max 2048 px)
-  - `labels.csv` (one row per image: file, species, view, length, weight, colours, markings, etc.)
+  - `images/<species>/T1-0001_1.jpg ...` (JPEG, max 2048 px)
+  - `labels.csv` (one row per image: file, fish ID, uid, tablet, species, view, length, weight, colours, markings, etc.)
   - `records.json` (one entry per fish with its image list)
 
 Export regularly and copy the ZIP off the tablet as a backup; clearing Chrome's site data deletes the stored fish.
+
+## Using several tablets
+- **Give every tablet its own code.** Tap the **Tablet …** button in the header and enter e.g. `T1`, `T2`, `T3` before you start recording. Each tablet starts with a random code, so they are unique anyway, but short codes are easier to read.
+- Every fish gets a permanent ID like `T1-0007` (tablet code + number) plus a hidden `uid`. Both are in `labels.csv` and `records.json`, and images are named after the ID, so photos from different tablets never overwrite each other.
+- Each export contains **all** fish on that tablet, so exporting twice gives the same fish twice. Don't copy the CSVs together by hand. Put all the ZIPs in one folder on the PC and run:
+
+      python merge.py path\to\folder -o merged-fish-dataset.zip
+
+  It keeps each fish once (the most recently edited copy, matched by `uid`), renames any clashing IDs, rebuilds `labels.csv`/`records.json`, and warns if the same photo was attached to two fish. It also accepts ZIPs from the older app version.
+- A fish deleted on a tablet after it was exported will still be in older ZIPs; leave those ZIPs out of the merge (or remove the fish from the merged CSV) if that matters.
 
 ## Tech stack
 - **Alpine.js 3** (`vendor/alpine.min.js`, bundled locally so it works offline) for interactivity

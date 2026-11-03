@@ -19,6 +19,7 @@
     <button class="btn btn-light md:hidden" x-show="editing" @click="editing = false">&larr; List</button>
     <h1 class="text-xl font-bold flex-1 m-0">Fish Data Collector</h1>
     <span class="text-sm opacity-85 hidden sm:inline" x-text="summary"></span>
+    <button class="btn btn-light" title="Tablet code (must be different on every tablet)" @click="renameDevice()" x-text="'Tablet ' + device"></button>
     <button class="btn btn-light" @click="startNew()">+ New fish</button>
     <button class="btn !bg-brand-dark" :disabled="busy" @click="exportDataset()">Export dataset</button>
   </header>
@@ -36,7 +37,7 @@
           <div>
             <div class="font-semibold" x-text="f.species || '(no species)'"></div>
             <div class="text-sm text-slate-500"
-                 x-text="f.photos.length + (f.photos.length === 1 ? ' photo' : ' photos') + (f.length ? ' · ' + f.length + ' cm' : '')"></div>
+                 x-text="(fishId(f) ? fishId(f) + ' · ' : '') + f.photos.length +(f.photos.length === 1 ? ' photo' : ' photos') + (f.length ? ' · ' + f.length + ' cm' : '')"></div>
           </div>
         </div>
       </template>
@@ -47,7 +48,7 @@
     <!-- Editor pane -->
     <section class="overflow-auto p-3.5" :class="editing ? '' : 'hidden md:block'">
       <div class="bg-white rounded-2xl p-4 shadow-sm max-w-4xl" x-show="cur">
-        <h2 class="text-lg font-bold mb-3" x-text="cur && cur.isNew ? 'New fish' : 'Edit fish'"></h2>
+        <h2 class="text-lg font-bold mb-3" x-text="cur && cur.isNew ? 'New fish' : 'Edit fish ' + fishId(cur)"></h2>
 
         <span class="lbl">Photos (take several angles of the same fish)</span>
         <div class="flex flex-wrap gap-2.5">
